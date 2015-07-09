@@ -17,7 +17,8 @@ use x11::xlib;
 pub struct GLRasterizationContext {
     display: *const xlib::Display,
     glx_context: xlib::XID,
-    glx_pixmap: xlib::XID,
+    pub pixmap: xlib::XID,
+    pub glx_pixmap: xlib::XID,
     pub size: Size2D<i32>,
 
     pub framebuffer_id: gl::GLuint,
@@ -25,6 +26,9 @@ pub struct GLRasterizationContext {
     depth_stencil_renderbuffer_id: gl::GLuint,
     pub gr_context: skia::SkiaGrContextRef,
 }
+
+unsafe impl Sync for GLRasterizationContext {}
+unsafe impl Send for GLRasterizationContext {}
 
 impl Drop for GLRasterizationContext {
     fn drop(&mut self) {
@@ -52,12 +56,20 @@ impl Drop for GLRasterizationContext {
 impl GLRasterizationContext {
     pub fn new(display: *mut xlib::Display,
                visual_info: *mut xlib::XVisualInfo,
-               pixmap: xlib::Pixmap,
+               _pixmap: xlib::Pixmap,
                size: Size2D<i32>)
                -> Option<GLRasterizationContext> {
         unsafe {
             let glx_display = display as *mut glx::types::Display;
             let glx_visual_info = visual_info as *mut glx::types::XVisualInfo;
+
+            let root_window =
+                xlib::XRootWindow(display, xlib::XDefaultScreen(display));
+            let pixmap = xlib::XCreatePixmap(display,
+                                             root_window,
+                                             size.width as u32,
+                                             size.height as u32,
+                                             (*visual_info).depth as u32);
             let glx_pixmap = glx::CreateGLXPixmap(glx_display,
                                                   glx_visual_info,
                                                   pixmap);
@@ -94,6 +106,7 @@ impl GLRasterizationContext {
             Some(GLRasterizationContext {
                 display: display,
                 glx_context: glx_context as xlib::XID,
+                pixmap: pixmap,
                 glx_pixmap: glx_pixmap as xlib::XID,
                 size: size,
                 framebuffer_id: framebuffer_id,

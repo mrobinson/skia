@@ -25,6 +25,9 @@ pub struct GLRasterizationContext {
     pub gr_context: skia::SkiaGrContextRef,
 }
 
+unsafe impl Sync for GLRasterizationContext {}
+unsafe impl Send for GLRasterizationContext {}
+
 impl Drop for GLRasterizationContext {
     fn drop(&mut self) {
         self.make_current();
@@ -93,11 +96,11 @@ impl GLRasterizationContext {
     }
 
     pub fn flush_to_surface(&self) {
-        gl::bind_framebuffer(gl::FRAMEBUFFER, self.framebuffer_id);
-        gl::framebuffer_texture_2d(gl::FRAMEBUFFER,
-                                   gl::COLOR_ATTACHMENT0,
-                                   gl::TEXTURE_RECTANGLE_ARB,
-                                   0,
-                                   0);
+        //gl::bind_framebuffer(gl::FRAMEBUFFER, self.framebuffer_id);
+        //gl::framebuffer_texture_2d(gl::FRAMEBUFFER,
+        //                           gl::COLOR_ATTACHMENT0,
+        //                           gl::TEXTURE_RECTANGLE_ARB,
+        //                           0,
+        //                           0);
     }
 }
